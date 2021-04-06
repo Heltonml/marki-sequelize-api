@@ -3,7 +3,7 @@ const dotenv = require('dotenv');
 const morgan = require('morgan');
 
 dotenv.config({
-    path: process.NODE_ENV === 'test' ? '.env.testing' : '.env'
+    path: process.env.NODE_ENV === 'test' ? '.env.testing' : '.env'
 });
 
 const app = express();
@@ -17,8 +17,21 @@ const server = app.listen(PORT, () => {
     console.info(`The Server is running on port 🚀🚀🚀 ${PORT} 🚀🚀🚀`);
 });
 
-app.use('/', (req, res, next) => {
-    res.status(200).json({ message: `Server is running in ${process.env.NODE_ENV} mode.` });
+app.use(require('./routes/app'));
+
+app.use((req, res, next) => {
+    const erro = new Error(`Route not Found.`);
+    erro.status = 404;
+    next(erro);
+});
+
+app.use((error, req, res, next) => {
+    res.status(error.status || 500);
+    return res.send({
+        erro: {
+            mensagem: error.message
+        }
+    });
 });
 
 module.exports = app;
